@@ -27,9 +27,6 @@ IMPC harvester for comsortium's resources citing papers
   ```console
   python reference_harvester.py 
   ```
- 
-## Development environment setup
-
 
 ## Development environment setup
 1. Install [Spark 2+](https://spark.apache.org/) and remember to set the ``SPARK_HOME`` environment variable.
