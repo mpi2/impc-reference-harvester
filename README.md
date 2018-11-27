@@ -9,22 +9,22 @@ IMPC harvester for comsortium's resources citing papers
 ## How to run
 
 1. Clone this repo:
-  ```
+  ```console
   git clone https://github.com/mpi2/impc-reference-harvester.git
   cd impc-reference-harvester
   ```
 2. Edit the **config_example.ini** file.
 3. Create a new pyvenv and activate it:
-  ```
+  ```console
   python3 -m venv .venv
   source .venv/bin/activate
   ```
 4. Install python dependecies:
-  ```
+  ```console
   pip install -r requirements.txt
   ```
 5. Run the script:
-  ```
+  ```console
   python reference_harvester.py 
   ```
  
