@@ -29,16 +29,15 @@ IMPC harvester for comsortium's resources citing papers
   ```
 
 ## Development environment setup
-1. Install [Spark 2+](https://spark.apache.org/) and remember to set the ``SPARK_HOME`` environment variable.
-2. Fork this repo and then clone your forked version:
+1. Fork this repo and then clone your forked version:
     ```console
     git clone https://github.com/USERNAME/impc-reference-harvester.git
     cd impc-reference-harvester
     ```
-3. Use your favorite IDE to make your awesome changes and make sure the project is pointing to the venv generated.
+2. Use your favorite IDE to make your awesome changes and make sure the project is pointing to the venv generated.
 To do that using Pycharm fo to the instructions [here](https://www.jetbrains.com/help/pycharm/configuring-python-interpreter.html).
 
-4. And finally commit and push your changes to your fork and the make a pull request to the original repo when you are ready to go.
+3. And finally commit and push your changes to your fork and the make a pull request to the original repo when you are ready to go.
 Another member of the team will review your changes and after having two +1 you will be ready to merge them to the base repo.
 
     In order to sync your forked local version with the base repo you need to add an _upstream_ remote:
