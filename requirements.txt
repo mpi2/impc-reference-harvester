@@ -1,0 +1,10 @@
+click
+sqlalchemy
+tqdm
+bs4
+intermine
+pysolr
+solrq
+pdfminer.six
+requests
+nltk
