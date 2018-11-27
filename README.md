@@ -3,6 +3,7 @@ IMPC harvester for comsortium's resources citing papers
 
 ## Requirements
 - [Python 3+](https://www.python.org/)
+- [NLTK](https://www.nltk.org/install.html)
 - [MongoDB](https://www.mongodb.com/)
 - [Solr](http://lucene.apache.org/solr/) with the [Allele2 core](https://goo.gl/H9Mqgy) loaded
 
