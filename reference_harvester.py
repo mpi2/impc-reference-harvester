@@ -68,7 +68,9 @@ def harvest():
     all_references = mousemine_references + europe_pmc_papers + citing_consortium_papers
     click.secho("NLP Processing", fg='blue')
     all_references_processed = Parallel(n_jobs=8)(delayed(nlp.get_fragments)(reference) for reference in all_references)
-    mongo_access.insert_all(all_references_processed)
+    if len(all_references_processed) > 0:
+        mongo_access.insert_all(all_references_processed)
+    click.secho("Finished", fg='blue')
 
 
 if __name__ == '__main__':
