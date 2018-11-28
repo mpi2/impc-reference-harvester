@@ -3,6 +3,7 @@ from utils import config, logger
 import json
 import urllib.parse
 from datetime import datetime
+from itertools import chain
 
 
 def get_papers_by_keyword(keyword):
@@ -10,7 +11,7 @@ def get_papers_by_keyword(keyword):
     europmc_query = config.get('DEFAULT', 'EUROPE_PMC_KEYWORDS_QUERY').format(keyword=keyword)
     europmc_rq_url = europmc_url + urllib.parse.quote_plus(europmc_query)
     europmc_results = execute_query_all(europmc_rq_url)
-    europmc_results = [{'keyword': keyword, 'source': 'europmc', **parse_result(r)} for r in europmc_results]
+    europmc_results = [dict(chain({'keyword': keyword, 'source': 'europmc'}.items(), parse_result(r).items())) for r in europmc_results]
     return europmc_results
 
 
@@ -19,7 +20,7 @@ def get_citing_papers(pmid):
     europmc_query = config.get('DEFAULT', 'EUROPE_PMC_CITES_QUERY').format(pmid=pmid)
     europmc_rq_url = europmc_url + urllib.parse.quote_plus(europmc_query)
     europmc_results = execute_query_all(europmc_rq_url)
-    europmc_results = [{'cites': [pmid], 'source': 'europmc', **parse_result(r)} for r in europmc_results]
+    europmc_results = [dict(chain({'cites': [pmid], 'source': 'europmc'}.items(), parse_result(r).items())) for r in europmc_results]
     return europmc_results
 
 
