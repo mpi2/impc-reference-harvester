@@ -1,8 +1,8 @@
 import click
 from docs.impc_header import header
 from utils import mousemine_api, europe_pmc_api, mongo_access, config, nlp
-import tqdm
 from joblib import Parallel, delayed
+from itertools import chain
 
 
 @click.command()
@@ -19,9 +19,11 @@ def harvest():
         if pmid in existing_pmids:
             continue
         bibliographic_data = europe_pmc_api.get_paper_by_pmid(pmid)
-        mousemine_reference = {'alleles': alleles, 'reviewed': True, 'falsePositive': False,
-                               'datasource': 'mousemine', 'consortiumPaper': False, 'citations': [],
-                               'cites': [], 'alleleCandidates': [], 'citedBy': [], **bibliographic_data}
+        mousemine_reference = dict(
+            chain({'alleles': alleles, 'reviewed': True, 'falsePositive': False,
+                   'datasource': 'mousemine', 'consortiumPaper': False, 'citations': [],
+                   'cites': [], 'alleleCandidates': [], 'citedBy': []}.items(),
+                  bibliographic_data.items()))
         mousemine_references.append(mousemine_reference)
         existing_pmids.append(pmid)
 
@@ -32,13 +34,14 @@ def harvest():
             if citing_paper['pmid'] in existing_pmids:
                 continue
             if citing_paper['pmid'] not in citing_consortium_papers_index:
-                citing_consortium_papers_index[citing_paper['pmid']] = {'reviewed': False, 'alleles': [],
-                                                                        'falsePositive': False,
-                                                                        'datasource': 'europepmc',
-                                                                        'consortiumPaper': False,
-                                                                        'citations': [],
-                                                                        'citedBy': [],
-                                                                        'alleleCandidates': [], **citing_paper}
+                citing_consortium_papers_index[citing_paper['pmid']] = dict(
+                    chain({'reviewed': False, 'alleles': [],
+                           'falsePositive': False,
+                           'datasource': 'europepmc',
+                           'consortiumPaper': False,
+                           'citations': [],
+                           'citedBy': [],
+                           'alleleCandidates': []}.items(), citing_paper.items()))
             else:
                 citing_consortium_papers_index[citing_paper['pmid']]['cites'].append(paper['pmid'])
             existing_pmids.append(citing_paper['pmid'])
@@ -51,23 +54,30 @@ def harvest():
     for index, paper in enumerate(search_results):
         if paper['pmid'] in existing_pmids:
             continue
-        europe_pmc_papers.append({'reviewed': False, 'alleles': [], 'falsePositive': False,
-                                  'datasource': 'europepmc', 'consortiumPaper': False,
-                                  'citations': [], 'cites': [], 'citedBy': [], 'alleleCandidates': [], **paper})
+        europe_pmc_papers.append(
+            dict(chain({'reviewed': False, 'alleles': [], 'falsePositive': False,
+                        'datasource': 'europepmc', 'consortiumPaper': False,
+                        'citations': [], 'cites': [], 'citedBy': [],
+                        'alleleCandidates': []}.items(), paper.items())))
         existing_pmids.append(paper['pmid'])
 
-    click.secho("Found {} new references in Mousemine".format(len(mousemine_references)), fg='green', bold=True)
-    click.secho("Found {} new references in EuroPMC".format(len(europe_pmc_papers)), fg='green', bold=True)
-    click.secho("Found {} new references in EuroPMC citing Consortium papers".format(len(citing_consortium_papers)), fg='green', bold=True)
+    click.secho("Found {} new references in Mousemine".format(len(mousemine_references)),
+                fg='green', bold=True)
+    click.secho("Found {} new references in EuroPMC".format(len(europe_pmc_papers)), fg='green',
+                bold=True)
+    click.secho("Found {} new references in EuroPMC citing Consortium papers".format(
+        len(citing_consortium_papers)), fg='green', bold=True)
     for reference in mousemine_references + europe_pmc_papers + citing_consortium_papers:
         existing_reference = mongo_access.get_by_pmid(reference['pmid'])
         if existing_reference:
-            if existing_reference['datasource'] == 'manual' and reference['datasource'] == 'mousemine':
+            if existing_reference['datasource'] == 'manual' and \
+                    reference['datasource'] == 'mousemine':
                 mongo_access.delete_by_pmid(existing_reference['pmid'])
 
     all_references = mousemine_references + europe_pmc_papers + citing_consortium_papers
     click.secho("NLP Processing", fg='blue')
-    all_references_processed = Parallel(n_jobs=8)(delayed(nlp.get_fragments)(reference) for reference in all_references)
+    all_references_processed = Parallel(n_jobs=8)(
+        delayed(nlp.get_fragments)(reference) for reference in all_references)
     if len(all_references_processed) > 0:
         mongo_access.insert_all(all_references_processed)
     click.secho("Finished", fg='blue')
