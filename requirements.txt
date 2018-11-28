@@ -8,3 +8,6 @@ solrq
 pdfminer.six
 requests
 nltk
+pymongo
+joblib
+lxml
