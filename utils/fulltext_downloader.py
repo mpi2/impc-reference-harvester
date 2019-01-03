@@ -142,7 +142,7 @@ def resolve_doi(doi_url):
     doi = doi_url.replace('https://doi.org/', '')
     doi_resolver_request = config.get('DEFAULT', 'DOI_RESOLVER_URL').format(doi=doi)
     response = requests.get(doi_resolver_request)
-    response = json.loads(response.content)
+    response = json.loads(response.content.decode('utf-8'))
     if 'values' in response and response['values']:
         return response['values'][0]['data']['value']
     else:
