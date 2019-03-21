@@ -6,7 +6,7 @@
   <constraint path="Allele.projectCollection" code="E" op="=" value="NorCOMM"/>
   <constraint path="Allele.publications.abstractText" code="G" op="CONTAINS" value="IMPC"/>
   <constraint path="Allele.publications.abstractText" code="H" op="CONTAINS" value="IKMC"/>
-  <constraint path="Allele.publications.abstractText" code="I" op="CONTAINS" value=" International Knockout Mouse Consortium"/>
+  <constraint path="Allele.publications.abstractText" code="I" op="CONTAINS" value="International Knockout Mouse Consortium"/>
   <constraint path="Allele.publications.abstractText" code="J" op="CONTAINS" value="International Mouse Phenotyping Consortium"/>
   <constraint path="Allele.publications.pubMedId" code="K" op="!=" value="NULL"/>
 </query>
