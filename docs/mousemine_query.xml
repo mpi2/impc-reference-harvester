@@ -1,10 +1,13 @@
-<query name="" model="genomic" view="Allele.name Allele.primaryIdentifier Allele.symbol Allele.publications.pubMedId Allele.projectCollection Allele.feature.symbol Allele.feature.primaryIdentifier" longDescription="" sortOrder="Allele.symbol asc" constraintLogic="(A or B or C or D or E or F or G) and H">
+<query name="" model="genomic" view="Allele.name Allele.primaryIdentifier Allele.symbol Allele.publications.pubMedId Allele.projectCollection Allele.feature.symbol Allele.feature.primaryIdentifier" longDescription="" sortOrder="Allele.symbol asc" constraintLogic="(A or B or C or D or E or F or G or H or I or J) and K">
   <constraint path="Allele.projectCollection" code="A" op="=" value="EUCOMM"/>
   <constraint path="Allele.projectCollection" code="B" op="=" value="KOMP-CSD"/>
   <constraint path="Allele.projectCollection" code="C" op="=" value="KOMP-Regeneron"/>
-  <constraint path="Allele.publications.abstractText" code="D" op="CONTAINS" value="IMPC"/>
-  <constraint path="Allele.publications.abstractText" code="E" op="CONTAINS" value="IKMC"/>
-  <constraint path="Allele.publications.abstractText" code="F" op="CONTAINS" value=" International Knockout Mouse Consortium"/>
-  <constraint path="Allele.publications.abstractText" code="G" op="CONTAINS" value="International Mouse Phenotyping Consortium"/>
-  <constraint path="Allele.publications.pubMedId" code="H" op="!=" value="NULL"/>
+  <constraint path="Allele.projectCollection" code="D" op="=" value="IMPC"/>
+  <constraint path="Allele.projectCollection" code="E" op="=" value="NorCOMM"/>
+  <constraint path="Allele.projectCollection" code="F" op="=" value="EUCOMMTOOLS"/>
+  <constraint path="Allele.publications.abstractText" code="G" op="CONTAINS" value="IMPC"/>
+  <constraint path="Allele.publications.abstractText" code="H" op="CONTAINS" value="IKMC"/>
+  <constraint path="Allele.publications.abstractText" code="I" op="CONTAINS" value=" International Knockout Mouse Consortium"/>
+  <constraint path="Allele.publications.abstractText" code="J" op="CONTAINS" value="International Mouse Phenotyping Consortium"/>
+  <constraint path="Allele.publications.pubMedId" code="K" op="!=" value="NULL"/>
 </query>
