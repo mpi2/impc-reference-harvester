@@ -4,7 +4,6 @@
   <constraint path="Allele.projectCollection" code="C" op="=" value="KOMP-Regeneron"/>
   <constraint path="Allele.projectCollection" code="D" op="=" value="IMPC"/>
   <constraint path="Allele.projectCollection" code="E" op="=" value="NorCOMM"/>
-  <constraint path="Allele.projectCollection" code="F" op="=" value="EUCOMMTOOLS"/>
   <constraint path="Allele.publications.abstractText" code="G" op="CONTAINS" value="IMPC"/>
   <constraint path="Allele.publications.abstractText" code="H" op="CONTAINS" value="IKMC"/>
   <constraint path="Allele.publications.abstractText" code="I" op="CONTAINS" value=" International Knockout Mouse Consortium"/>
