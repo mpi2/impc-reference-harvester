@@ -19,7 +19,7 @@ def get_fragments_from_text(text):
         'IMPC': [],
         'International Mouse Phenotyping Consortium': [],
     }
-    allele_name_candidates = [match.group().replace(' ', '') for match in re.finditer('(([a-z]|[0-9])*?(\s*)<(\s*)tm([A-Z]|[a-z]|[0-9]|\.)*?\((eucomm|komp)\)([a-z]|[0-9])*?\s*>)', text, re.IGNORECASE)]
+    allele_name_candidates = [match.group().replace(' ', '') for match in re.finditer('(([a-z]|[0-9])*?(\s*)<(\s*)(tm|em)([A-Z]|[a-z]|[0-9]|\.)*?\((eucomm|komp|impc)\)([a-z]|[0-9])*?\s*>)', text, re.IGNORECASE)]
     allele_name_candidates = [allele_symbol.replace('eucomm', 'EUCOMM').replace('komp', 'KOMP').replace(' ', '') for
                          allele_symbol in allele_name_candidates]
     allele_name_candidates = list(set(allele_name_candidates))
