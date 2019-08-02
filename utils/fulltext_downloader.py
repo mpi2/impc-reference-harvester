@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 import os.path
 from utils import config, logger
+from urllib import parse
 
 
 def download_fulltext(reference):
@@ -23,9 +24,11 @@ def download_fulltext(reference):
     if os.path.isfile(nxml_file_name) or get_xml(reference):
         with open(nxml_file_name, 'r') as xml_file:
             cites_pmids = reference['cites'] if 'cites' in reference else []
-            text, citations = process_xml(xml_file.read(), cites_pmids)
+            text, citations, correspondence = process_xml(xml_file.read(), cites_pmids)
             if len(cites_pmids) > 0 and len(citations) > 0:
                 reference['citations'].extend(citations)
+            if len(correspondence) > 0:
+                reference['correspondence'] = correspondence
     elif os.path.isfile(txt_file_name):
         with open(txt_file_name, 'r') as txt_file:
             text = txt_file.read()
@@ -45,7 +48,7 @@ def download_fulltext(reference):
 
 def process_html(url):
     response = process_url(url)
-    if not response:
+    if response is None:
         return ''
     body = response.text.replace('\n', ' ').replace('<sup>', '&lt;').replace('</sup>', '&gt;')
     soup = BeautifulSoup(body, 'html.parser')
@@ -59,7 +62,12 @@ def process_xml(xml_text, cites_pmids):
         return ''
     xml_text = xml_text.replace('\n', ' ').replace('<sup>', '&lt;').replace('</sup>', '&gt;').replace('<italic>', '').replace('</italic>', '')
     soup = BeautifulSoup(xml_text, 'xml')
-    xml_content = soup.findAll(text=True)
+    body_content = soup.find_all('body')
+    abstract_content = soup.find_all('abstract')
+    title_content = soup.find_all('article-title')
+    text = u" ".join(t.text.strip() for t in body_content)
+    text += u" ".join(t.text.strip() for t in abstract_content)
+    text += u" ".join(t.text.strip() for t in title_content)
     citations = []
     for cites_pmid in cites_pmids:
         ref_list_elem = soup.find('ref-list')
@@ -75,7 +83,7 @@ def process_xml(xml_text, cites_pmids):
                         pmid_citations = []
                         for citation in citations_elems:
                             if citation.findParent('p'):
-                                citation_text = citation.findParent('p').text.replace('<' + citation.text + '>',
+                                citation_text = citation.findParent('p').text.replace(citation.text,
                                                                                       '[{}]'.format(cites_pmid))
                                 citation_text = citation_text.replace('[' + citation.text + ']',
                                                                       '[{}]'.format(cites_pmid))
@@ -83,7 +91,7 @@ def process_xml(xml_text, cites_pmids):
                                                                       '[{}]'.format(cites_pmid))
                                 pmid_citations.append(citation_text)
                         citations.append({'pmid': cites_pmid, 'references': pmid_citations})
-    return u" ".join(t.strip() for t in xml_content), citations
+    return text, citations, get_corresponding_authors(soup)
 
 
 def process_pdf(url):
@@ -140,7 +148,7 @@ def process_url(url, times=0):
 
 def resolve_doi(doi_url):
     doi = doi_url.replace('https://doi.org/', '')
-    doi_resolver_request = config.get('DEFAULT', 'DOI_RESOLVER_URL').format(doi=doi)
+    doi_resolver_request = config.get('DEFAULT', 'DOI_RESOLVER_URL').format(doi=parse.quote(doi))
     response = requests.get(doi_resolver_request)
     response = json.loads(response.content)
     if 'values' in response and response['values']:
@@ -195,3 +203,33 @@ def tag_visible(element):
     if isinstance(element, Comment):
         return False
     return True
+
+
+def get_corresponding_authors(soup):
+    corresponding_refs = soup.find_all('xref', {'ref-type': 'corresp'})
+    correspondence_info = {}
+    for corresponding_ref in corresponding_refs:
+        if corresponding_ref['rid'] not in correspondence_info:
+            correspondence_info[corresponding_ref['rid']] = {'authors': [], 'emails': []}
+            corresp = soup.find(attrs={'id': corresponding_ref['rid']})
+            if corresp is None:
+                print('NO CORRESP: ' + soup.find('article-id', {'pub-id-type': 'pmid'}).text)
+                emails = []
+            else:
+                emails = [email.text for email in corresp.find_all('email')]
+            correspondence_info[corresponding_ref['rid']]['emails'] = emails
+        if corresponding_ref.parent.find('given-names') is None:
+            print('NO GIVEN NAMES: ' + soup.find('article-id', {'pub-id-type': 'pmid'}).text)
+            author_given_names = ''
+            if corresponding_ref.parent.find('collab') is not None:
+                author_given_names = corresponding_ref.parent.find('collab').text
+        else:
+            author_given_names = corresponding_ref.parent.find('given-names').text
+        if corresponding_ref.parent.find('surname') is None:
+            print('NO SURNAME: ' + soup.find('article-id', {'pub-id-type': 'pmid'}).text)
+            author_surname = ''
+        else:
+            author_surname = corresponding_ref.parent.find('surname').text
+        author_name = author_given_names + ' ' + author_surname
+        correspondence_info[corresponding_ref['rid']]['authors'].append(author_name)
+    return list(correspondence_info.values())
