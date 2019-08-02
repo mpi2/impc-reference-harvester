@@ -4,10 +4,12 @@ import json
 import urllib.parse
 from datetime import datetime
 from itertools import chain
+import urllib.parse
 
 
 def get_papers_by_keyword(keyword):
     europmc_url = config.get('DEFAULT', 'EUROPE_PMC_SERVICE_URL')
+    keyword = urllib.parse.quote(keyword.replace('/', ' '))
     europmc_query = config.get('DEFAULT', 'EUROPE_PMC_KEYWORDS_QUERY').format(keyword=keyword)
     europmc_rq_url = europmc_url + urllib.parse.quote_plus(europmc_query)
     europmc_results = execute_query_all(europmc_rq_url)
@@ -71,4 +73,5 @@ def parse_result(reference):
     mesh_heading_list = [mesh_term['descriptorName'] for mesh_term in mesh_heading_list]
     reference['meshHeadingList'] = mesh_heading_list
     reference['firstPublicationDate'] = datetime.strptime(reference['firstPublicationDate'], '%Y-%m-%d')
+    reference['pubYear'] = int(reference['pubYear'])
     return reference

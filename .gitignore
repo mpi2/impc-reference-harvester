@@ -9,6 +9,16 @@ docs/xml/*
 # C extensions
 *.so
 config.ini
+config.infrafrontier.ini
+docs/infrafrontier_order_ids.csv
+docs/infrafrontier_reviewed_pmids.txt
+tests/txt/*
+tests/xml/*
+context_finder.py
+tests/mentions.csv
+tests/mentions.xlsx
+tests/microinjections_mentions.csv
+tests/publications_by_allele_final.csv
 # Distribution / packaging
 .Python
 build/
