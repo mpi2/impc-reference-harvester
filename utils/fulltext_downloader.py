@@ -62,12 +62,12 @@ def process_xml(xml_text, cites_pmids):
         return ''
     xml_text = xml_text.replace('\n', ' ').replace('<sup>', '&lt;').replace('</sup>', '&gt;').replace('<italic>', '').replace('</italic>', '')
     soup = BeautifulSoup(xml_text, 'xml')
-    body_content = soup.find_all('body')
-    abstract_content = soup.find_all('abstract')
-    title_content = soup.find_all('article-title')
-    text = u" ".join(t.text.strip() for t in body_content)
-    text += u" ".join(t.text.strip() for t in abstract_content)
-    text += u" ".join(t.text.strip() for t in title_content)
+    text = ''
+    sections = ['ack', 'funding-group', 'abstract', 'article-title', 'body']
+    for section in sections:
+        section_content = soup.find_all(section)
+        text += u" ".join(t.text.strip() for t in section_content)
+
     citations = []
     for cites_pmid in cites_pmids:
         ref_list_elem = soup.find('ref-list')
@@ -138,7 +138,7 @@ def process_url(url, times=0):
         response = requests.get(url, headers=headers)
     except Exception as e:
         time.sleep(10)
-        print('retrying')
+        logger.info('Retrying: {} {} time'.format(url, times))
         if times < 3:
             return process_url(url, times + 1)
         else:
@@ -159,6 +159,8 @@ def resolve_doi(doi_url):
 
 def get_xml(reference):
     if 'pmcid' not in reference:
+        return False
+    if 'isOpenAccess' in reference and reference['isOpenAccess'] is not 'Y':
         return False
     rq_url = config.get('DEFAULT', 'PMC_AOI_URL').format(pmcid=reference['pmcid'])
     try:
