@@ -49,6 +49,7 @@ def get_all():
     collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
     return [result for result in collection.find({})]
 
+
 def get_by_pmid(pmid):
     client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
     db = client[config.get('DEFAULT', 'MONGO_DATABASE')]

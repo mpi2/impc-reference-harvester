@@ -30,7 +30,7 @@ def submit(pmid):
         chain({'status': 'pending', 'alleles': [],
                'datasource': 'manual', 'consortiumPaper': False,
                'citations': [], 'cites': [], 'citedBy': [],
-               'alleleCandidates': [], 'orderId': ''}.items(), reference.items()))
+               'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(), reference.items()))
     reference['firstPublicationDate'] = str(reference['firstPublicationDate'].isoformat())
     reference = nlp.get_fragments(reference, alleles)
     return reference
@@ -38,8 +38,6 @@ def submit(pmid):
 
 def scrub(obj, bad_key="_id"):
     if isinstance(obj, dict):
-        # the call to `list` is useless for py2 but makes
-        # the code py2/py3 compatible
         for key in list(obj.keys()):
             if key == bad_key:
                 del obj[key]
@@ -53,7 +51,6 @@ def scrub(obj, bad_key="_id"):
                 scrub(obj[i], bad_key)
 
     else:
-        # neither a dict nor a list, do nothing
         pass
 
 

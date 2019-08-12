@@ -47,7 +47,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                 reviewed_reference = dict(
                     chain({'alleles': [], 'status': 'reviewed',
                            'datasource': 'manual', 'consortiumPaper': False, 'citations': [],
-                           'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderId': ''}.items(),
+                           'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
                           bibliographic_data.items()))
                 harvested_references[pmid] = reviewed_reference
 
@@ -70,7 +70,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
             mousemine_reference = dict(
                 chain({'alleles': alleles, 'status': 'reviewed',
                        'datasource': 'mousemine', 'consortiumPaper': False, 'citations': [],
-                       'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderId': ''}.items(),
+                       'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
                       bibliographic_data.items()))
             harvested_references[pmid] = mousemine_reference
             mousemine_harvest_count += 1
@@ -93,7 +93,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                                'consortiumPaper': False,
                                'citations': [],
                                'citedBy': [],
-                               'alleleCandidates': [], 'orderId': ''}.items(),
+                               'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
                               citing_paper.items()))
                 else:
                     harvested_references[citing_paper['pmid']]['cites'].append(
@@ -125,7 +125,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                        'datasource': 'europepmc',
                        'status': 'pending',
                        'citations': [], 'cites': [], 'citedBy': [],
-                       'alleleCandidates': [], 'orderId': ''}.items(), paper.items())))
+                       'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(), paper.items())))
             keyword_harvest_count += 1
 
     click.secho("Found {} new references in Mousemine".format(mousemine_harvest_count),
@@ -149,7 +149,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                           for row in csv.DictReader(f, skipinitialspace=True)]
             pmid_order = {c['pubmed_id']: c['request_id'] for c in csv_orders}
         for ref in all_raw_references:
-            ref['orderId'] = pmid_order[ref['pmid']] if ref['pmid'] in pmid_order else None
+            ref['orderIds'] = [pmid_order[ref['pmid']]] if ref['pmid'] in pmid_order else []
 
     click.secho("NLP Processing", fg='blue')
     all_references_processed = Parallel(n_jobs=8)(
@@ -166,7 +166,13 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
     for reference in tqdm(update_references_processed):
         mongo_access.update_by_pmid(reference['pmid'],
                                     {'fragments': reference['fragments'],
-                                     'orderId': reference['orderId'] if 'orderId' in reference and reference['orderId'] is not None else '',
+                                     'orderIds': reference['orderIds'] if 'orderIds' in reference and reference['orderIds'] is not None else [],
+                                     'emmaIds': reference[
+                                         'emmaIds'] if 'emmaIds' in reference and reference[
+                                         'emmaIds'] is not None else [],
+                                     'comment': reference[
+                                         'comment'] if 'comment' in reference and reference[
+                                         'comment'] is not None else '',
                                      'citations': reference[
                                          'citations'] if 'citations' in reference else [],
                                      'alleleCandidates': reference['alleleCandidates'],
