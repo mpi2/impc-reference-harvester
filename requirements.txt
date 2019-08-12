@@ -11,3 +11,5 @@ nltk
 pymongo
 joblib
 lxml
+flask
+flask-cors

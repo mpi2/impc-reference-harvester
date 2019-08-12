@@ -37,18 +37,24 @@ def exist(pmid):
 
 
 def get_existing_pmids():
-    print(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
     client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
     db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
     collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
     return [result['pmid'] for result in collection.find({}, {'pmid': 1})]
 
 
+def get_all():
+    client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
+    db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
+    collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
+    return [result for result in collection.find({})]
+
+
 def get_by_pmid(pmid):
     client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
     db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
     collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
-    return collection.find_one({'pmid': pmid})
+    return collection.find_one({'pmid': str(pmid)})
 
 
 def update_by_pmid(pmid, changes):
@@ -87,4 +93,6 @@ def get_by_allele_symbol(allele_symbol):
     if allele is None:
         allele = {'alleleSymbol': allele_symbol, 'alleleName': '', 'acc': '', 'gacc': '',
                   'geneSymbol': '', 'project': ''}
+    else:
+        allele.pop('_id')
     return allele
