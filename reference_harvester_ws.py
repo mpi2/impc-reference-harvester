@@ -30,7 +30,7 @@ def submit(pmid):
         chain({'status': 'pending', 'alleles': [],
                'datasource': 'manual', 'consortiumPaper': False,
                'citations': [], 'cites': [], 'citedBy': [],
-               'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(), reference.items()))
+               'alleleCandidates': [], 'comment': ''}.items(), reference.items()))
     reference['firstPublicationDate'] = str(reference['firstPublicationDate'].isoformat())
     reference = nlp.get_fragments(reference, alleles)
     return reference

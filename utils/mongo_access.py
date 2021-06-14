@@ -1,5 +1,6 @@
 from pymongo import MongoClient, TEXT
 from utils import config
+import datetime
 
 
 def insert_reference(publication):
@@ -96,3 +97,26 @@ def get_by_allele_symbol(allele_symbol):
     else:
         allele.pop('_id')
     return allele
+
+
+def get_by_date_before():
+    client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
+    db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
+    collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
+    return [result for result in collection.find({"status": "reviewed", "firstPublicationDate": {
+        "$lte": datetime.datetime.strptime("2018-10-10", "%Y-%m-%d")}})]
+
+
+def get_by_date_after():
+    client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
+    db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
+    collection = db[config.get('DEFAULT', 'MONGO_REFERENCES_COLLECTION')]
+    return [result for result in collection.find({"status": "reviewed", "firstPublicationDate": {
+        "$gt": datetime.datetime.strptime("2018-10-10T00:00:00.000+0000", "%Y-%m-%dT%H:%M:%S%z")}})]
+
+
+def affiliation_exists(pmid):
+    client = MongoClient(config.get('DEFAULT', 'MONGO_DATASOURCE_URL'))
+    db = client[config.get('DEFAULT', 'MONGO_DATABASE')]
+    collection = db[config.get('DEFAULT', 'MONGO_AFFILIATIONS_COLLECTION')]
+    return collection.find_one({'pmid': str(pmid)}) is not None

@@ -6,12 +6,14 @@ from itertools import chain
 from tqdm import tqdm
 import csv
 
+from utils.solr_access import resolve_allele
+
 
 @click.command()
 @click.option('--use-mousemine', '-m', is_flag=True, help="Use mousemine.")
 @click.option('--use-alleles', '-a', is_flag=True, help="Use alleles file.")
-@click.option('--use-consortium-citations', '-c', is_flag=True, help="Use alleles file.")
-@click.option('--add_order_id', '-o', is_flag=True, help="Import order ids.")
+@click.option('--use-consortium-citations', '-c', is_flag=True, help="Use consortium citations.")
+@click.option('--add-order-id', '-o', is_flag=True, help="Import order ids.")
 @click.option('--load-reviewed-pmids', '-p', is_flag=True, help="Load pmids from file.")
 @click.option('--import-alleles', '-i', is_flag=True, help="Import load alleles file.")
 def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, load_reviewed_pmids,
@@ -47,7 +49,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                 reviewed_reference = dict(
                     chain({'alleles': [], 'status': 'reviewed',
                            'datasource': 'manual', 'consortiumPaper': False, 'citations': [],
-                           'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
+                           'cites': [], 'alleleCandidates': [], 'citedBy': [], 'comment': ''}.items(),
                           bibliographic_data.items()))
                 harvested_references[pmid] = reviewed_reference
 
@@ -70,7 +72,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
             mousemine_reference = dict(
                 chain({'alleles': alleles, 'status': 'reviewed',
                        'datasource': 'mousemine', 'consortiumPaper': False, 'citations': [],
-                       'cites': [], 'alleleCandidates': [], 'citedBy': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
+                       'cites': [], 'alleleCandidates': [], 'citedBy': [], 'comment': ''}.items(),
                       bibliographic_data.items()))
             harvested_references[pmid] = mousemine_reference
             mousemine_harvest_count += 1
@@ -93,7 +95,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                                'consortiumPaper': False,
                                'citations': [],
                                'citedBy': [],
-                               'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(),
+                               'alleleCandidates': [], 'comment': ''}.items(),
                               citing_paper.items()))
                 else:
                     harvested_references[citing_paper['pmid']]['cites'].append(
@@ -125,7 +127,7 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                        'datasource': 'europepmc',
                        'status': 'pending',
                        'citations': [], 'cites': [], 'citedBy': [],
-                       'alleleCandidates': [], 'orderIds': [], 'emmaIds': [], 'comment': ''}.items(), paper.items())))
+                       'alleleCandidates': [], 'comment': ''}.items(), paper.items())))
             keyword_harvest_count += 1
 
     click.secho("Found {} new references in Mousemine".format(mousemine_harvest_count),
@@ -144,12 +146,36 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
                                             {'alleles': reference['alleles'],
                                              'datasource': 'mousemine'})
     if add_order_id:
+        click.secho("Updating allele info using provided order ids file", fg='blue')
         with open(config.get('DEFAULT', 'ORDER_ID_FILE'), encoding='utf-8-sig') as f:
             csv_orders = [{k: v for k, v in row.items()}
                           for row in csv.DictReader(f, skipinitialspace=True)]
-            pmid_order = {c['pubmed_id']: c['request_id'] for c in csv_orders}
+            pmid_vs_alleles = dict()
+            for c in csv_orders:
+                allele = resolve_allele(c['allele'])
+                allele['_class'] = "org.impc.publications.models.AlleleRef"
+                allele['orderId'] = c['request_id']
+                if c['pubmed_id'] not in pmid_vs_alleles:
+                    pmid_vs_alleles[c['pubmed_id']] = []
+                pmid_vs_alleles[c['pubmed_id']].append(allele)
         for ref in all_raw_references:
-            ref['orderIds'] = [pmid_order[ref['pmid']]] if ref['pmid'] in pmid_order else []
+            ref['alleles'] = pmid_vs_alleles[ref['pmid']] if ref['pmid'] in pmid_vs_alleles else []
+        for ref in update_papers:
+            ref['alleles'] = pmid_vs_alleles[ref['pmid']] if ref['pmid'] in pmid_vs_alleles and len(ref['alleles']) == 0 else ref ['alleles']
+        all_papers = mongo_access.get_all()
+        for ref in [paper for paper in all_papers if paper["pmid"] not in update_pmids]:
+            ref['alleles'] = pmid_vs_alleles[ref['pmid']] if ref['pmid'] in pmid_vs_alleles and len(
+                ref['alleles']) == 0 else ref['alleles']
+            update_papers.append(ref)
+            update_pmids.append(ref['pmid'])
+
+        click.secho("Update alleles for 30553776:", fg='blue')
+        click.secho(str(pmid_vs_alleles["30553776"]), fg="blue")
+        if any([ref["pmid"] == "30553776" for ref in update_papers]):
+            click.secho("30553776 in update_papers:", fg='red')
+            click.secho(str([ref["pmid"] == "30553776" for ref in update_papers]), fg='red')
+        if any([ref["pmid"] == "30553776" for ref in all_raw_references]):
+            click.secho("30553776 in all_raw_references:", fg='red')
 
     click.secho("NLP Processing", fg='blue')
     all_references_processed = Parallel(n_jobs=8)(
@@ -158,24 +184,22 @@ def harvest(use_mousemine, use_alleles, use_consortium_citations, add_order_id, 
         mongo_access.insert_all(all_references_processed)
     click.secho("Update NLP Processing for existing papers", fg='blue')
     if len(update_papers) == 0:
+        click.secho("    Updating all", fg='blue')
         update_papers = mongo_access.get_all()
     update_references_processed = Parallel(n_jobs=8)(
         delayed(nlp.get_fragments)(reference, alleles) for reference in tqdm(update_papers))
 
-    click.secho("Update existing papers in Mongodb", fg='blue')
+    click.secho(f"Update existing papers in Mongodb: {len(update_references_processed)}", fg='blue')
     for reference in tqdm(update_references_processed):
         mongo_access.update_by_pmid(reference['pmid'],
                                     {'fragments': reference['fragments'],
-                                     'orderIds': reference['orderIds'] if 'orderIds' in reference and reference['orderIds'] is not None else [],
-                                     'emmaIds': reference[
-                                         'emmaIds'] if 'emmaIds' in reference and reference[
-                                         'emmaIds'] is not None else [],
                                      'comment': reference[
                                          'comment'] if 'comment' in reference and reference[
                                          'comment'] is not None else '',
                                      'citations': reference[
                                          'citations'] if 'citations' in reference else [],
                                      'alleleCandidates': reference['alleleCandidates'],
+                                     'alleles': reference['alleles'] if 'alleles' in reference else [],
                                      'correspondence': reference[
                                          'correspondence'] if 'correspondence' in reference else []
                                      })
