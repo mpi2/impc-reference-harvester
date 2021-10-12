@@ -79,7 +79,9 @@ def execute_query_all(rq_url):
             "nextCursorMark" not in page_result
             or cursor_mark == page_result["nextCursorMark"]
         )
-        cursor_mark = page_result["nextCursorMark"]
+        cursor_mark = (
+            page_result["nextCursorMark"] if "nextCursorMark" in page_result else None
+        )
     return results
 
 
