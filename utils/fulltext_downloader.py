@@ -191,7 +191,7 @@ def get_xml(reference):
         return False
     if "isOpenAccess" in reference and reference["isOpenAccess"] != "Y":
         return False
-    rq_url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/PMC{reference['pmcid']}/fullTextXML"
+    rq_url = f"https://www.ebi.ac.uk/europepmc/webservices/rest/{reference['pmcid']}/fullTextXML"
     try:
         # logger.info("PMC OA query started: " + rq_url)
         # pmc_xml_record = session.get(rq_url).text
