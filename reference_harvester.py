@@ -266,8 +266,14 @@ def harvest(
     if len(all_references_processed) > 0:
         mongo_access.insert_all(all_references_processed)
     click.secho("Update NLP Processing for existing papers", fg="blue")
-    click.secho("    Updating all", fg="blue")
-    update_papers = mongo_access.get_all()
+    if len(update_papers) == 0:
+        click.secho("    Updating all", fg="blue")
+        update_papers = mongo_access.get_all()
+    else:
+        for paper in mongo_access.get_all():
+            if paper["pmid"] not in update_pmids:
+                update_papers.append(paper)
+                update_pmids.append(paper["pmid"])
     update_references_processed = Parallel(n_jobs=8)(
         delayed(nlp.get_fragments)(reference, alleles)
         for reference in tqdm(update_papers)
