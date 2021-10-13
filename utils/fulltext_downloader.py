@@ -216,6 +216,7 @@ def get_xml(reference):
     except Exception as e:
         logger.error("PMC OA query failed " + rq_url + ": " + str(e))
         return False
+    return True
 
 
 def extract_tgz(ftp_url, out_path, pmcid):
