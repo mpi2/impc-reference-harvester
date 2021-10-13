@@ -36,7 +36,9 @@ def download_fulltext(reference):
     if os.path.isfile(nxml_file_name) or get_xml(reference):
         with open(nxml_file_name, "r") as xml_file:
             cites_pmids = reference["cites"] if "cites" in reference else []
-            text, citations, correspondence = process_xml(xml_file.read(), cites_pmids)
+            text, citations, correspondence = process_xml(
+                xml_file.read(), cites_pmids, reference["pmid"]
+            )
             if len(cites_pmids) > 0 and len(citations) > 0:
                 reference["citations"].extend(citations)
             if len(correspondence) > 0:
@@ -73,7 +75,7 @@ def process_html(url):
     return " ".join(t.strip() for t in visible_texts)
 
 
-def process_xml(xml_text, cites_pmids):
+def process_xml(xml_text, cites_pmids, pmid):
     xml_text = (
         xml_text.replace("\n", " ")
         .replace("<sup>", "&lt;")
@@ -118,7 +120,7 @@ def process_xml(xml_text, cites_pmids):
                         citations.append(
                             {"pmid": cites_pmid, "references": pmid_citations}
                         )
-    return text, citations, get_corresponding_authors(soup)
+    return text, citations, get_corresponding_authors(soup, pmid)
 
 
 def process_pdf(url):
@@ -254,7 +256,7 @@ def tag_visible(element):
     return True
 
 
-def get_corresponding_authors(soup):
+def get_corresponding_authors(soup, pmid):
     corresponding_refs = soup.find_all("xref", {"ref-type": "corresp"})
     correspondence_info = {}
     for corresponding_ref in corresponding_refs:
@@ -265,28 +267,20 @@ def get_corresponding_authors(soup):
             }
             corresp = soup.find(attrs={"id": corresponding_ref["rid"]})
             if corresp is None:
-                print(
-                    "NO CORRESP: "
-                    + soup.find("article-id", {"pub-id-type": "pmid"}).text
-                )
+                print("NO CORRESP: " + pmid)
                 emails = []
             else:
                 emails = [email.text for email in corresp.find_all("email")]
             correspondence_info[corresponding_ref["rid"]]["emails"] = emails
         if corresponding_ref.parent.find("given-names") is None:
-            print(
-                "NO GIVEN NAMES: "
-                + soup.find("article-id", {"pub-id-type": "pmid"}).text
-            )
+            print("NO GIVEN NAMES: " + pmid)
             author_given_names = ""
             if corresponding_ref.parent.find("collab") is not None:
                 author_given_names = corresponding_ref.parent.find("collab").text
         else:
             author_given_names = corresponding_ref.parent.find("given-names").text
         if corresponding_ref.parent.find("surname") is None:
-            print(
-                "NO SURNAME: " + soup.find("article-id", {"pub-id-type": "pmid"}).text
-            )
+            print("NO SURNAME: " + pmid)
             author_surname = ""
         else:
             author_surname = corresponding_ref.parent.find("surname").text
