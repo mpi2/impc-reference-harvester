@@ -74,8 +74,6 @@ def process_html(url):
 
 
 def process_xml(xml_text, cites_pmids):
-    if not xml_text:
-        return ""
     xml_text = (
         xml_text.replace("\n", " ")
         .replace("<sup>", "&lt;")
@@ -211,7 +209,10 @@ def get_xml(reference):
         file = open(
             config.get("DEFAULT", "XML_DIR") + "/" + reference["pmid"] + ".nxml", "w"
         )
-        file.write(r.text)
+        plain_text = r.text
+        if len(plain_text) == 0:
+            return False
+        file.write(plain_text)
         file.close()
     except Exception as e:
         logger.error("PMC OA query failed " + rq_url + ": " + str(e))
