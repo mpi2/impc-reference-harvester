@@ -217,10 +217,13 @@ def harvest(
                 existing_reference["datasource"] in ["manual", "europepmc"]
                 and reference["datasource"] == "mousemine"
             ):
-                mongo_access.update_by_pmid(
-                    existing_reference["pmid"],
-                    {"alleles": reference["alleles"], "datasource": "mousemine"},
-                )
+                try:
+                    mongo_access.update_by_pmid(
+                        existing_reference["pmid"],
+                        {"alleles": reference["alleles"], "datasource": "mousemine"},
+                    )
+                except Exception as e:
+                    print('[ERROR] Encountered exception: {}'.format(e.__class__))
     if add_order_id:
         click.secho("Updating allele info using provided order ids file", fg="blue")
         with open(config.get("DEFAULT", "ORDER_ID_FILE"), encoding="utf-8-sig") as f:
@@ -284,24 +287,27 @@ def harvest(
         fg="blue",
     )
     for reference in tqdm(update_references_processed):
-        mongo_access.update_by_pmid(
-            reference["pmid"],
-            {
-                "fragments": reference["fragments"],
-                "comment": reference["comment"]
-                if "comment" in reference and reference["comment"] is not None
-                else "",
-                "tags": reference["tags"]
-                if "tags" in reference and reference["tags"] is not None
-                else [],
-                "citations": reference["citations"] if "citations" in reference else [],
-                "alleleCandidates": reference["alleleCandidates"],
-                "alleles": reference["alleles"] if "alleles" in reference else [],
-                "correspondence": reference["correspondence"]
-                if "correspondence" in reference
-                else [],
-            },
-        )
+        try:
+            mongo_access.update_by_pmid(
+                reference["pmid"],
+                {
+                    "fragments": reference["fragments"],
+                    "comment": reference["comment"]
+                    if "comment" in reference and reference["comment"] is not None
+                    else "",
+                    "tags": reference["tags"]
+                    if "tags" in reference and reference["tags"] is not None
+                    else [],
+                    "citations": reference["citations"] if "citations" in reference else [],
+                    "alleleCandidates": reference["alleleCandidates"],
+                    "alleles": reference["alleles"] if "alleles" in reference else [],
+                    "correspondence": reference["correspondence"]
+                    if "correspondence" in reference
+                    else [],
+                },
+            )
+        except Exception as e:
+            print('[ERROR] Encountered exception: {}'.format(e.__class__))
     click.secho("Update existing papers in Mongodb", fg="blue")
     click.secho("Finished", fg="blue")
 
