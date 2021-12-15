@@ -47,7 +47,10 @@ def get_paper_by_pmid(pmid):
     europmc_url = config.get("DEFAULT", "EUROPE_PMC_SERVICE_URL")
     europmc_query = config.get("DEFAULT", "EUROPE_PMC_PMID_QUERY").format(pmid=pmid)
     europmc_rq_url = europmc_url + urllib.parse.quote_plus(europmc_query)
-    results = execute_query(europmc_rq_url)["resultList"]["result"]
+    europmc_results = execute_query(europmc_rq_url)
+    results = []
+    if 'resultList' in europmc_results:
+        results = ["resultList"]["result"]
     paper = results[0] if len(results) > 0 else {}
     return parse_result(paper)
 

@@ -1,4 +1,10 @@
+import csv
+from itertools import chain
+
 import click
+from joblib import Parallel, delayed
+from tqdm import tqdm
+
 from docs.impc_header import header
 from utils import (
     mousemine_api,
@@ -8,11 +14,6 @@ from utils import (
     nlp,
     allele_importer,
 )
-from joblib import Parallel, delayed
-from itertools import chain
-from tqdm import tqdm
-import csv
-
 from utils.solr_access import resolve_allele
 
 
@@ -26,12 +27,12 @@ from utils.solr_access import resolve_allele
 @click.option("--load-reviewed-pmids", "-p", is_flag=True, help="Load pmids from file.")
 @click.option("--import-alleles", "-i", is_flag=True, help="Import load alleles file.")
 def harvest(
-    use_mousemine,
-    use_alleles,
-    use_consortium_citations,
-    add_order_id,
-    load_reviewed_pmids,
-    import_alleles,
+        use_mousemine,
+        use_alleles,
+        use_consortium_citations,
+        add_order_id,
+        load_reviewed_pmids,
+        import_alleles,
 ):
     """Command line application to harvest publications that cite or contain IMPC data resources"""
     existing_pmids = mongo_access.get_existing_pmids()
@@ -160,13 +161,17 @@ def harvest(
     if use_alleles:
         with open(config.get("DEFAULT", "TARGET_ALLELE_FILE")) as f:
             alleles = f.read().splitlines()
-        for keyword in alleles:
-            search_results.extend(europe_pmc_api.get_papers_by_keyword(keyword))
         click.secho(
             "Found {} alleles to use".format(len(alleles)),
             fg="green",
             bold=True,
         )
+
+        for keyword in alleles:
+            try:
+                search_results.extend(europe_pmc_api.get_papers_by_keyword(keyword))
+            except Exception as e:
+                print('[ERROR] Encountered exception: {}'.format(e.__class__))
 
     for index, paper in enumerate(search_results):
         if update_exisiting_papers and paper["pmid"] in existing_pmids:
@@ -219,8 +224,8 @@ def harvest(
         existing_reference = mongo_access.get_by_pmid(reference["pmid"])
         if existing_reference:
             if (
-                existing_reference["datasource"] in ["manual", "europepmc"]
-                and reference["datasource"] == "mousemine"
+                    existing_reference["datasource"] in ["manual", "europepmc"]
+                    and reference["datasource"] == "mousemine"
             ):
                 try:
                     mongo_access.update_by_pmid(
