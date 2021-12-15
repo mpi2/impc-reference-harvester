@@ -167,11 +167,11 @@ def harvest(
             bold=True,
         )
 
-        for keyword in alleles:
-            try:
-                search_results.extend(europe_pmc_api.get_papers_by_keyword(keyword))
-            except Exception as e:
-                print('[ERROR] Encountered exception: {}'.format(e.__class__))
+#        for keyword in alleles:
+#            try:
+#                search_results.extend(europe_pmc_api.get_papers_by_keyword(keyword))
+#            except Exception as e:
+#                print('[ERROR] Encountered exception: {}'.format(e.__class__))
 
     for index, paper in enumerate(search_results):
         if update_exisiting_papers and paper["pmid"] in existing_pmids:
