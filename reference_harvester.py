@@ -162,6 +162,11 @@ def harvest(
             alleles = f.read().splitlines()
         for keyword in alleles:
             search_results.extend(europe_pmc_api.get_papers_by_keyword(keyword))
+        click.secho(
+            "Found {} alleles to use".format(len(alleles)),
+            fg="green",
+            bold=True,
+        )
 
     for index, paper in enumerate(search_results):
         if update_exisiting_papers and paper["pmid"] in existing_pmids:
