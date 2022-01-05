@@ -7,13 +7,13 @@ app = Flask(__name__)
 CORS(app)
 
 
-@app.route("/harvest/<int:pmid>", methods=['GET', 'OPTIONS'])
+@app.route("/harvest/<int:pmid>", methods=["GET", "OPTIONS"])
 def submit(pmid):
-    use_alleles = request.args.get('useAlleles')
+    use_alleles = request.args.get("useAlleles")
     alleles = None
 
     if use_alleles:
-        with open(config.get('DEFAULT', 'TARGET_ALLELE_FILE')) as f:
+        with open(config.get("DEFAULT", "TARGET_ALLELE_FILE")) as f:
             alleles = f.read().splitlines()
 
     if mongo_access.exist(pmid):
@@ -24,14 +24,28 @@ def submit(pmid):
     reference = europe_pmc_api.get_paper_by_pmid(pmid)
 
     if reference is None:
-        return jsonify({'error': 'Error while trying to get data from EuropePMC'})
+        return jsonify({"error": "Error while trying to get data from EuropePMC"})
 
     reference = dict(
-        chain({'status': 'pending', 'alleles': [],
-               'datasource': 'manual', 'consortiumPaper': False,
-               'citations': [], 'cites': [], 'citedBy': [],
-               'alleleCandidates': [], 'comment': ''}.items(), reference.items()))
-    reference['firstPublicationDate'] = str(reference['firstPublicationDate'].isoformat())
+        chain(
+            {
+                "status": "pending",
+                "alleles": [],
+                "datasource": "manual",
+                "consortiumPaper": False,
+                "citations": [],
+                "cites": [],
+                "citedBy": [],
+                "alleleCandidates": [],
+                "comment": "",
+                "tags": [],
+            }.items(),
+            reference.items(),
+        )
+    )
+    reference["firstPublicationDate"] = str(
+        reference["firstPublicationDate"].isoformat()
+    )
     reference = nlp.get_fragments(reference, alleles)
     return reference
 
@@ -54,5 +68,5 @@ def scrub(obj, bad_key="_id"):
         pass
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=8000, host='0.0.0.0')
+if __name__ == "__main__":
+    app.run(debug=True, port=8000, host="0.0.0.0")
