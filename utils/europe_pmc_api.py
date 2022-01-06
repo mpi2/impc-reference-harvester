@@ -77,7 +77,8 @@ def execute_query_all(rq_url):
     results = []
     while not done:
         page_result = execute_query(rq_url, cursor_mark)
-        results.extend(page_result["resultList"]["result"])
+        if "resultList" in page_result:
+            results.extend(page_result["resultList"]["result"])
         done = (
             "nextCursorMark" not in page_result
             or cursor_mark == page_result["nextCursorMark"]
