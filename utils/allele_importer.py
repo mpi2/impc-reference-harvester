@@ -35,15 +35,15 @@ def drop_alleles_collection():
 
 
 def load_all():
-    # solr_alleles = get_alleles_from_solr()
-    # print(len(solr_alleles))
+    solr_alleles = get_alleles_from_solr()
+    print(len(solr_alleles))
     emma_alleles = get_alleles_from_file(config.get("DEFAULT", "LOAD_ALLELE_FILE"))
-    # for emma_allele in emma_alleles.values():
-    #     if emma_allele['alleleSymbol'] not in solr_alleles:
-    #         solr_alleles[emma_allele['alleleSymbol']] = emma_allele
+    for emma_allele in emma_alleles.values():
+        if emma_allele["alleleSymbol"] not in solr_alleles:
+            solr_alleles[emma_allele["alleleSymbol"]] = emma_allele
 
-    alleles = emma_alleles.values()
-    # print(len(alleles))
+    alleles = list(solr_alleles.values())
+    print(len(alleles))
     drop_alleles_collection()
     load_alleles(alleles)
     create_allele_index()
