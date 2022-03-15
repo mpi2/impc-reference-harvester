@@ -275,20 +275,7 @@ def harvest(
 
     click.secho("NLP Processing", fg="blue")
     if use_infrafrontier_nlp:
-        click.secho(
-            "Alleles found: {}".format(alleles),
-            fg="green",
-            bold=True,
-        )
-
         long_alleles = [allele_name for allele_name in alleles if len(allele_name) > 7]
-
-        click.secho(
-            "Using long allele names: {}".format(long_alleles),
-            fg="green",
-            bold=True,
-        )
-
         all_references_processed = Parallel(n_jobs=8)(
             delayed(nlp.get_fragments)(reference, long_alleles)
             for reference in tqdm(all_raw_references)
