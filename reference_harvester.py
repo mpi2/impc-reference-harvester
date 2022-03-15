@@ -26,6 +26,7 @@ from utils.solr_access import resolve_allele
 @click.option("--add-order-id", "-o", is_flag=True, help="Import order ids.")
 @click.option("--load-reviewed-pmids", "-p", is_flag=True, help="Load pmids from file.")
 @click.option("--import-alleles", "-i", is_flag=True, help="Import load alleles file.")
+@click.option("--use-infrafrontier-nlp", "-n", is_flag=True, help="Use Infrafrontier specific NLP.")
 def harvest(
         use_mousemine,
         use_alleles,
@@ -33,6 +34,7 @@ def harvest(
         add_order_id,
         load_reviewed_pmids,
         import_alleles,
+        use_infrafrontier_nlp
 ):
     """Command line application to harvest publications that cite or contain IMPC data resources"""
     existing_pmids = mongo_access.get_existing_pmids()
@@ -272,12 +274,37 @@ def harvest(
             update_pmids.append(ref["pmid"])
 
     click.secho("NLP Processing", fg="blue")
-    all_references_processed = Parallel(n_jobs=8)(
-        delayed(nlp.get_fragments)(reference, alleles)
-        for reference in tqdm(all_raw_references)
-    )
+    if use_infrafrontier_nlp:
+        click.secho(
+            "Alleles found: {}".format(alleles),
+            fg="green",
+            bold=True,
+        )
+
+        long_alleles = [allele_name for allele_name in alleles if len(allele_name) > 7]
+
+        click.secho(
+            "Using long allele names: {}".format(long_alleles),
+            fg="green",
+            bold=True,
+        )
+
+        all_references_processed = Parallel(n_jobs=8)(
+            delayed(nlp.get_fragments)(reference, long_alleles)
+            for reference in tqdm(all_raw_references)
+        )
+    else:
+        all_references_processed = Parallel(n_jobs=8)(
+            delayed(nlp.get_fragments)(reference, alleles)
+            for reference in tqdm(all_raw_references)
+        )
     if len(all_references_processed) > 0:
         mongo_access.insert_all(all_references_processed)
+
+    if use_infrafrontier_nlp:
+        click.secho("Skipping NLP Processing for existing papers", fg="blue")
+        return
+
     click.secho("Update NLP Processing for existing papers", fg="blue")
     if len(update_papers) == 0:
         click.secho("    Updating all", fg="blue")
