@@ -1,4 +1,4 @@
-PubMed ID,allele,order ID,EMMA ID,comment
+pubmed_id,allele,order_id,emma_id,comment
 12483226,Igf1r<tm1.2Mhz>,157,,Anna de Castro (user publications)
 20858605,Gjb6<tm1.1Fama>,7585,,CNR_Apr_19
 22542184,Prnp<tm1Cwe>,976,,from_bulk_email_Jan_2023
