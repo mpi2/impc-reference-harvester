@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup
 from bs4.element import Comment
 import os.path
 
+from pdfminer.pdfparser import PDFSyntaxError
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
 
@@ -140,19 +141,21 @@ def process_pdf(url):
     caching = True
     pagenos = set()
 
-    for page in PDFPage.get_pages(
-        pdf_content,
-        pagenos,
-        maxpages=maxpages,
-        password=password,
-        caching=caching,
-        check_extractable=True,
-    ):
-        interpreter.process_page(page)
-
-    text = retstr.getvalue()
-    device.close()
-    retstr.close()
+    try:
+        for page in PDFPage.get_pages(
+            pdf_content,
+            pagenos,
+            maxpages=maxpages,
+            password=password,
+            caching=caching,
+            check_extractable=True,
+        ):
+            interpreter.process_page(page)
+        text = retstr.getvalue()
+        device.close()
+        retstr.close()
+    except PDFSyntaxError:
+        text = ''
     return text
 
 
